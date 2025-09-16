@@ -136,15 +136,28 @@ builder.Services.AddSwaggerGen(c =>
 // 11. Registra o serviço de Hash (Singleton)
 builder.Services.AddSingleton<IHashService, BCryptHashService>();
 
+// 12. Configura o CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:3000") // endereço do frontend
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
 
-// 12. Configura o pipeline de requisição HTTP.
+// 13. Configura o pipeline de requisição HTTP.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
