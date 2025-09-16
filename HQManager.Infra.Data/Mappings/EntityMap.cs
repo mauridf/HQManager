@@ -11,6 +11,10 @@ public static class EntityMap
 {
     public static void RegisterClassMaps()
     {
+        // CONFIGURAÇÃO GLOBAL PARA GUID (Solução do erro)
+        // Define que todos os Guids serão serializados como BsonType.String
+        BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+
         // Convention Pack para ignorar valores default (evita salvar null/0 no BD)
         var conventionPack = new ConventionPack
         {

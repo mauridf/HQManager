@@ -1,6 +1,8 @@
-﻿namespace HQManager.Domain.Entities;
+﻿using HQManager.Domain.Interfaces;
 
-public abstract class EntityBase
+namespace HQManager.Domain.Entities;
+
+public abstract class EntityBase : IEntity
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 }

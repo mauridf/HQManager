@@ -3,7 +3,7 @@ using MongoDB.Driver;
 
 namespace HQManager.Infra.Data.Repositories;
 
-public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
+public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class, IEntity
 {
     protected readonly IMongoCollection<T> _collection;
 
@@ -30,9 +30,8 @@ public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
 
     public virtual async Task UpdateAsync(T entity)
     {
-        // Assume que a entidade tem uma propriedade Id
-        var idValue = (Guid)entity.GetType().GetProperty("Id").GetValue(entity);
-        var filter = Builders<T>.Filter.Eq("_id", idValue);
+        // Agora podemos acessar entity.Id diretamente graças à constraint IEntity
+        var filter = Builders<T>.Filter.Eq("_id", entity.Id);
         await _collection.ReplaceOneAsync(filter, entity);
     }
 

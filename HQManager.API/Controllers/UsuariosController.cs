@@ -4,11 +4,13 @@ using HQManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using HQManager.Domain.Entities;
 using HQManager.CrossCutting.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HQManager.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioRepository _usuarioRepository;
@@ -21,6 +23,7 @@ public class UsuariosController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     public async Task<ActionResult<UsuarioResponse>> Post([FromBody] UsuarioCreateRequest request)
     {
         // 1. Validar se o email já está em uso

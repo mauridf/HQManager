@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using HQManager.CrossCutting.Config; // Para JwtSettings
 using HQManager.CrossCutting.Services; // Para IAuthService
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,12 @@ builder.Services.AddScoped<IUsuarioRepository>(sp =>
 {
     var dbContext = sp.GetRequiredService<MongoDbContext>();
     return new UsuarioRepository(dbContext.Usuarios);
+});
+
+builder.Services.AddScoped<IEditoraRepository>(sp =>
+{
+    var dbContext = sp.GetRequiredService<MongoDbContext>();
+    return new EditoraRepository(dbContext.Editoras);
 });
 
 // 5. Registra o serviço de Seed (Criação de Índices) como HostedService
@@ -72,7 +79,35 @@ builder.Services.AddAuthorization();
 
 // 10. Adiciona o Swagger para documentar e testar a API
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HQManager API", Version = "v1" });
+
+    // Configuração para suportar JWT no Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // 11. Registra o serviço de Hash (Singleton)
 builder.Services.AddSingleton<IHashService, BCryptHashService>();
