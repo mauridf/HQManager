@@ -39,6 +39,12 @@ builder.Services.AddScoped<IEditoraRepository>(sp =>
     return new EditoraRepository(dbContext.Editoras);
 });
 
+builder.Services.AddScoped<IPersonagemRepository>(sp =>
+{
+    var dbContext = sp.GetRequiredService<MongoDbContext>();
+    return new PersonagemRepository(dbContext.Personagens);
+});
+
 // 5. Registra o serviço de Seed (Criação de Índices) como HostedService
 builder.Services.AddHostedService<MongoDbSeed>();
 
