@@ -13,6 +13,6 @@ public class UsuarioCreateRequest
     public string Senha { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "A confirmação de senha é obrigatória.")]
-    [Compare("Senha", ErrorErrorMessage = "A senha e a confirmação de senha não coincidem.")]
+    [Compare("Senha", ErrorMessage = "A senha e a confirmação de senha não coincidem.")]
     public string ConfirmarSenha { get; set; } = string.Empty;
 }
