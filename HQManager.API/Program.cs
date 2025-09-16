@@ -5,6 +5,11 @@ using Microsoft.Extensions.Options;
 using HQManager.Domain.Interfaces;
 using HQManager.Infra.Data.Repositories;
 using HQManager.CrossCutting.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using HQManager.CrossCutting.Config; // Para JwtSettings
+using HQManager.CrossCutting.Services; // Para IAuthService
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,16 +35,51 @@ builder.Services.AddScoped<IUsuarioRepository>(sp =>
 // 5. Registra o serviço de Seed (Criação de Índices) como HostedService
 builder.Services.AddHostedService<MongoDbSeed>();
 
-// 6. Adiciona o Swagger para documentar e testar a API
+// 6. Configura e registra JwtSettings
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection(nameof(JwtSettings)));
+
+// 7. Registra o serviço de Autenticação
+builder.Services.AddScoped<IAuthService, JwtAuthService>();
+
+// 8. Configura a Autenticação JWT
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+var key = Encoding.ASCII.GetBytes(jwtSettings.SecretKey);
+
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false; // true em produção!
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidateAudience = true,
+        ValidAudience = jwtSettings.Audience,
+        ValidateLifetime = true
+    };
+});
+
+// 9. Configura a Autorização
+builder.Services.AddAuthorization();
+
+// 10. Adiciona o Swagger para documentar e testar a API
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 7. Registra o serviço de Hash (Singleton)
+// 11. Registra o serviço de Hash (Singleton)
 builder.Services.AddSingleton<IHashService, BCryptHashService>();
 
 var app = builder.Build();
 
-// 8. Configura o pipeline de requisição HTTP.
+// 12. Configura o pipeline de requisição HTTP.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -47,10 +87,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers(); // Mapeia os endpoints dos controladores
 
-// 9. (OPCIONAL) Cria um endpoint mínimo para testar a conexão com o BD
+// 13. (OPCIONAL) Cria um endpoint mínimo para testar a conexão com o BD
 app.MapGet("/api/health", async (MongoDbContext context) =>
 {
     var isConnected = await context.IsConnected();

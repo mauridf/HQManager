@@ -8,9 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HQManager.Application\HQManager.Application.csproj" />
     <ProjectReference Include="..\HQManager.Domain\HQManager.Domain.csproj" />
   </ItemGroup>
 
