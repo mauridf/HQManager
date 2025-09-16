@@ -4,6 +4,7 @@ using HQManager.Domain.Entities;
 using MongoDB.Bson;
 using HQManager.Infra.Data.Config;
 using HQManager.Infra.Data.Mappings;
+using HQManager.Infra.Data.Config;
 
 namespace HQManager.Infra.Data.Data;
 
@@ -11,11 +12,11 @@ public class MongoDbContext
 {
     private readonly IMongoDatabase _database;
 
-    public MongoDbContext(IOptions<MongoDbSettings> settings)
+    public MongoDbContext(IMongoDbSettings settings) 
     {
-        var client = new MongoClient(settings.Value.ConnectionString);
-        _database = client.GetDatabase(settings.Value.DatabaseName);
-        MapEntities(); // Chama o método de mapeamento
+        var client = new MongoClient(settings.ConnectionString); 
+        _database = client.GetDatabase(settings.DatabaseName);
+        MapEntities();
     }
 
     // Propriedades para acessar as coleções
