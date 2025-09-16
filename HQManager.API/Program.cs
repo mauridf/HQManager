@@ -2,6 +2,9 @@ using HQManager.Infra.Data.Data;
 using HQManager.Infra.Data.Config;
 using HQManager.Infra.Data.Seed;
 using Microsoft.Extensions.Options;
+using HQManager.Domain.Interfaces;
+using HQManager.Infra.Data.Repositories;
+using HQManager.CrossCutting.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,16 +20,26 @@ builder.Services.AddSingleton<IMongoDbSettings>(sp =>
 // 3. Registra o MongoDbContext como um serviço Singleton
 builder.Services.AddSingleton<MongoDbContext>();
 
-// 4. Registra o serviço de Seed (Criação de Índices) como HostedService
+// 4. Registra os Repositories (Padrão: Scoped)
+builder.Services.AddScoped<IUsuarioRepository>(sp =>
+{
+    var dbContext = sp.GetRequiredService<MongoDbContext>();
+    return new UsuarioRepository(dbContext.Usuarios);
+});
+
+// 5. Registra o serviço de Seed (Criação de Índices) como HostedService
 builder.Services.AddHostedService<MongoDbSeed>();
 
-// 5. Adiciona o Swagger para documentar e testar a API
+// 6. Adiciona o Swagger para documentar e testar a API
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// 7. Registra o serviço de Hash (Singleton)
+builder.Services.AddSingleton<IHashService, BCryptHashService>();
+
 var app = builder.Build();
 
-// 6. Configura o pipeline de requisição HTTP.
+// 8. Configura o pipeline de requisição HTTP.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -37,7 +50,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers(); // Mapeia os endpoints dos controladores
 
-// 7. (OPCIONAL) Cria um endpoint mínimo para testar a conexão com o BD
+// 9. (OPCIONAL) Cria um endpoint mínimo para testar a conexão com o BD
 app.MapGet("/api/health", async (MongoDbContext context) =>
 {
     var isConnected = await context.IsConnected();

@@ -14,10 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\HQManager.Application\HQManager.Application.csproj" />
     <ProjectReference Include="..\HQManager.CrossCutting\HQManager.CrossCutting.csproj" />
     <ProjectReference Include="..\HQManager.Infra.Data\HQManager.Infra.Data.csproj" />
