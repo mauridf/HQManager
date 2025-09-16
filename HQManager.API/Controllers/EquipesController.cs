@@ -104,4 +104,20 @@ public class EquipesController : ControllerBase
         await _equipeRepository.DeleteAsync(id);
         return NoContent();
     }
+
+    // GET api/equipes/nome/{nome}
+    [HttpGet("nome/{nome}")]
+    public async Task<ActionResult<IEnumerable<EquipeResponse>>> GetByNome(string nome)
+    {
+        var equipes = await _equipeRepository.GetByNomeAsync(nome);
+        var response = equipes.Select(e => new EquipeResponse
+        {
+            Id = e.Id,
+            Nome = e.Nome,
+            Descricao = e.Descricao,
+            Imagem = e.Imagem,
+            AnoCriacao = e.AnoCriacao
+        });
+        return Ok(response);
+    }
 }

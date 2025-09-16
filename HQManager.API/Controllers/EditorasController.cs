@@ -109,4 +109,23 @@ public class EditorasController : ControllerBase
         await _editoraRepository.DeleteAsync(id);
         return NoContent(); // Retorna 204 No Content
     }
+
+    // GET api/editoras/nome/{nome}
+    [HttpGet("nome/{nome}")]
+    public async Task<ActionResult<EditoraResponse>> GetByNome(string nome)
+    {
+        var editora = await _editoraRepository.GetByNomeAsync(nome);
+        if (editora is null) return NotFound();
+
+        var response = new EditoraResponse
+        {
+            Id = editora.Id,
+            Nome = editora.Nome,
+            AnoCriacao = editora.AnoCriacao,
+            Logotipo = editora.Logotipo,
+            PaisOrigem = editora.PaisOrigem,
+            SiteOficial = editora.SiteOficial
+        };
+        return Ok(response);
+    }
 }

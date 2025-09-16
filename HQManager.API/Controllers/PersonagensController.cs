@@ -1,4 +1,5 @@
 ﻿using HQManager.Application.DTOs.Personagem;
+using HQManager.Domain.Enums;
 using HQManager.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -142,5 +143,39 @@ public class PersonagensController : ControllerBase
             Domain.Enums.TipoPersonagem.Outro => "Outro tipo de personagem",
             _ => "Tipo desconhecido"
         };
+    }
+
+    // GET api/personagens/tipo/{tipo}
+    [HttpGet("tipo/{tipo}")]
+    public async Task<ActionResult<IEnumerable<PersonagemResponse>>> GetByTipo(TipoPersonagem tipo)
+    {
+        var personagens = await _personagemRepository.GetByTipoAsync(tipo);
+        var response = personagens.Select(p => new PersonagemResponse
+        {
+            Id = p.Id,
+            Nome = p.Nome,
+            Tipo = p.Tipo,
+            Descricao = p.Descricao,
+            Imagem = p.Imagem,
+            PrimeiraAparicao = p.PrimeiraAparicao
+        });
+        return Ok(response);
+    }
+
+    // GET api/personagens/nome/{nome}
+    [HttpGet("nome/{nome}")]
+    public async Task<ActionResult<IEnumerable<PersonagemResponse>>> GetByNome(string nome)
+    {
+        var personagens = await _personagemRepository.GetByNomeAsync(nome);
+        var response = personagens.Select(p => new PersonagemResponse
+        {
+            Id = p.Id,
+            Nome = p.Nome,
+            Tipo = p.Tipo,
+            Descricao = p.Descricao,
+            Imagem = p.Imagem,
+            PrimeiraAparicao = p.PrimeiraAparicao
+        });
+        return Ok(response);
     }
 }
