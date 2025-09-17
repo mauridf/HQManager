@@ -20,6 +20,7 @@ public class MongoDbContext
     }
 
     // Propriedades para acessar as coleções
+    public IMongoDatabase Database => _database;
     public IMongoCollection<Usuario> Usuarios => _database.GetCollection<Usuario>("Usuarios");
     public IMongoCollection<Editora> Editoras => _database.GetCollection<Editora>("Editoras");
     public IMongoCollection<Personagem> Personagens => _database.GetCollection<Personagem>("Personagens");

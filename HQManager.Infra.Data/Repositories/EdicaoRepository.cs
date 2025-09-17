@@ -31,4 +31,10 @@ public class EdicaoRepository : RepositoryBase<Edicao>, IEdicaoRepository
         // Por simplicidade, vamos deixar a validação para a camada de aplicação
         return await Task.FromResult(true);
     }
+
+    public async Task<int> CountByHqIdAsync(Guid hqId)
+    {
+        var filter = Builders<Edicao>.Filter.Eq(e => e.HqId, hqId);
+        return (int)await _collection.CountDocumentsAsync(filter);
+    }
 }
