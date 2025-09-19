@@ -27,21 +27,31 @@ public class DashboardController : ControllerBase
     {
         try
         {
-            // Executar consultas de forma explícita (sem Task.WhenAll para evitar problemas de inferência)
-            var totalHQsTask = _dashboardRepository.ObterTotalHQsAsync();
-            var totalPersonagensTask = _dashboardRepository.ObterTotalPersonagensAsync();
-            var totalEquipesTask = _dashboardRepository.ObterTotalEquipesAsync();
-            var totalEdicoesLidasTask = _dashboardRepository.ObterTotalEdicoesLidasAsync();
-            var notaMediaTask = _dashboardRepository.ObterNotaMediaAsync();
-            var hqsRecentesTask = _dashboardRepository.ObterHQsRecentesAsync(4);
+            // Executar consultas de forma explícita com tratamento individual
+            int totalHQs = 0;
+            int totalPersonagens = 0;
+            int totalEquipes = 0;
+            int totalEdicoesLidas = 0;
+            double? notaMedia = null;
+            List<HQ> hqsRecentes = new();
 
-            // Aguardar todas as tarefas
-            var totalHQs = await totalHQsTask;
-            var totalPersonagens = await totalPersonagensTask;
-            var totalEquipes = await totalEquipesTask;
-            var totalEdicoesLidas = await totalEdicoesLidasTask;
-            var notaMedia = await notaMediaTask;
-            var hqsRecentes = await hqsRecentesTask;
+            try { totalHQs = await _dashboardRepository.ObterTotalHQsAsync(); }
+            catch (Exception ex) { Console.WriteLine($"Erro TotalHQs: {ex.Message}"); }
+
+            try { totalPersonagens = await _dashboardRepository.ObterTotalPersonagensAsync(); }
+            catch (Exception ex) { Console.WriteLine($"Erro TotalPersonagens: {ex.Message}"); }
+
+            try { totalEquipes = await _dashboardRepository.ObterTotalEquipesAsync(); }
+            catch (Exception ex) { Console.WriteLine($"Erro TotalEquipes: {ex.Message}"); }
+
+            try { totalEdicoesLidas = await _dashboardRepository.ObterTotalEdicoesLidasAsync(); }
+            catch (Exception ex) { Console.WriteLine($"Erro TotalEdicoesLidas: {ex.Message}"); }
+
+            try { notaMedia = await _dashboardRepository.ObterNotaMediaAsync(); }
+            catch (Exception ex) { Console.WriteLine($"Erro NotaMedia: {ex.Message}"); }
+
+            try { hqsRecentes = await _dashboardRepository.ObterHQsRecentesAsync(4); }
+            catch (Exception ex) { Console.WriteLine($"Erro HQsRecentes: {ex.Message}"); }
 
             var estatisticas = new EstatisticasResponse
             {
@@ -57,28 +67,33 @@ public class DashboardController : ControllerBase
             // Processar cada HQ recente
             foreach (var hq in hqsRecentes)
             {
-                // Obter edições de forma assíncrona
-                var edicoes = await _edicaoRepository.GetByHqIdAsync(hq.Id);
-
-                // Converter para lista para evitar múltiplas enumerações
-                var edicoesList = edicoes.ToList();
-
-                var edicoesLidas = edicoesList.Count(e => e.Lida);
-                var totalEdicoes = edicoesList.Count;
-
-                var progresso = totalEdicoes > 0
-                    ? $"{edicoesLidas}/{totalEdicoes}"
-                    : "0/0";
-
-                hqsResumo.Add(new HQResumoResponse
+                try
                 {
-                    Id = hq.Id,
-                    Nome = hq.Nome,
-                    Progresso = progresso,
-                    Status = ObterStatusHQ(hq.Status, edicoesLidas, totalEdicoes),
-                    EdicoesLidas = edicoesLidas,
-                    TotalEdicoes = totalEdicoes
-                });
+                    var edicoes = await _edicaoRepository.GetByHqIdAsync(hq.Id);
+                    var edicoesList = edicoes.ToList();
+
+                    var edicoesLidas = edicoesList.Count(e => e.Lida);
+                    var totalEdicoes = edicoesList.Count;
+
+                    var progresso = totalEdicoes > 0
+                        ? $"{edicoesLidas}/{totalEdicoes}"
+                        : "0/0";
+
+                    hqsResumo.Add(new HQResumoResponse
+                    {
+                        Id = hq.Id,
+                        Nome = hq.Nome,
+                        Progresso = progresso,
+                        Status = ObterStatusHQ(hq.Status, edicoesLidas, totalEdicoes),
+                        EdicoesLidas = edicoesLidas,
+                        TotalEdicoes = totalEdicoes
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro processando HQ {hq.Nome}: {ex.Message}");
+                    // Continua processando as outras HQs
+                }
             }
 
             var response = new DashboardResponse
@@ -91,7 +106,12 @@ public class DashboardController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Erro ao obter dados do dashboard", error = ex.Message });
+            return StatusCode(500, new
+            {
+                message = "Erro ao obter dados do dashboard",
+                error = ex.Message,
+                stackTrace = ex.StackTrace
+            });
         }
     }
 

@@ -21,6 +21,7 @@ public class DashboardRepository : IDashboardRepository
         _personagensCollection = database.GetCollection<Personagem>("Personagens");
         _equipesCollection = database.GetCollection<Equipe>("Equipes");
         _edicoesCollection = database.GetCollection<Edicao>("Edicoes");
+        _editorasCollection = database.GetCollection<Editora>("Editoras");
     }
 
     public async Task<int> ObterTotalHQsAsync()
@@ -45,20 +46,42 @@ public class DashboardRepository : IDashboardRepository
 
     public async Task<double?> ObterNotaMediaAsync()
     {
-        var pipeline = new[]
+        try
         {
-            new BsonDocument("$match", new BsonDocument("Nota", new BsonDocument("$ne", null))),
-            new BsonDocument("$group", new BsonDocument
+            var pipeline = new[]
             {
-                { "_id", null },
-                { "media", new BsonDocument("$avg", "$Nota") }
-            })
+            // Filtra apenas edições que têm nota (não nula)
+            BsonDocument.Parse(@"{
+                $match: {
+                    Nota: { $ne: null, $exists: true }
+                }
+            }"),
+            // Agrupa e calcula a média
+            BsonDocument.Parse(@"{
+                $group: {
+                    _id: null,
+                    media: { $avg: '$Nota' }
+                }
+            }")
         };
 
-        var result = await _edicoesCollection.AggregateAsync<BsonDocument>(pipeline);
-        var media = await result.FirstOrDefaultAsync();
+            var result = await _edicoesCollection.AggregateAsync<BsonDocument>(pipeline);
+            var mediaDoc = await result.FirstOrDefaultAsync();
 
-        return media != null && media.Contains("media") ? media["media"].AsDouble : null;
+            // Se não houver documentos com nota, retorna null
+            if (mediaDoc == null || !mediaDoc.Contains("media") || mediaDoc["media"].IsBsonNull)
+            {
+                return null;
+            }
+
+            return Math.Round(mediaDoc["media"].AsDouble, 1);
+        }
+        catch (Exception ex)
+        {
+            // Log do erro (em produção, use ILogger)
+            Console.WriteLine($"Erro ao calcular nota média: {ex.Message}");
+            return null;
+        }
     }
 
     public async Task<List<HQ>> ObterHQsRecentesAsync(int limite = 4)
